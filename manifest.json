@@ -1,0 +1,10 @@
+{
+	"id": "obsidian-global-dictionary",
+	"name": "Obsidian Global Dictionary",
+	"version": "0.0.1",
+	"minAppVersion": "0.15.0",
+	"description": "Maintains a global list of custom words, synced across devices. Can sync this list to the native Obsidian custom dictionary on desktop.",
+	"author": "masoniis",
+	"authorUrl": "https://masonbott.com",
+	"isDesktopOnly": false
+}
