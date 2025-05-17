@@ -21,12 +21,10 @@ export default class GlobalDictionarySyncPlugin extends Plugin {
 
     await this.syncDictionaries(true);
 
-    this.syncIntervalId = setInterval(
-      () => {
-        this.syncDictionaries(false, true); // Don't show notices for background syncs
-      },
-      2 * 60 * 1000,
-    );
+    this.syncIntervalId = setInterval(() => {
+      console.log("Syncing dictionaries");
+      this.syncDictionaries(false, true); // Don't show notices for background syncs
+    }, 15 * 1000);
 
     console.log("Global Dictionary: Set up automatic sync every 2 minutes");
 
@@ -51,12 +49,8 @@ export default class GlobalDictionarySyncPlugin extends Plugin {
     });
   }
 
-  // On unload, sync all extra local words to global
   onunload() {
-    // Clear the sync interval when plugin is unloaded
-    if (this.syncIntervalId) {
-      clearInterval(this.syncIntervalId);
-    }
+    if (this.syncIntervalId) clearInterval(this.syncIntervalId);
 
     // Final sync of dictionary before unloading
     this.syncDictionaries(false, true).catch((e) =>
@@ -82,7 +76,7 @@ export default class GlobalDictionarySyncPlugin extends Plugin {
           (word) => !localWords.includes(word),
         );
 
-        async function merge(): Promise<number> {
+        const merge = async (): Promise<number> => {
           let mergedCount = 0;
           for (const word of wordsToRemove) {
             if (!this.settings.globalWords.includes(word)) {
@@ -103,10 +97,12 @@ export default class GlobalDictionarySyncPlugin extends Plugin {
           await this.saveSettings();
 
           return mergedCount;
-        }
+        };
 
+        // If should merge, we return early since merge has already been decided
         if (shouldMerge) {
           merge();
+          return;
         }
 
         // If we have 5 words or more to remove, show confirmation dialog
@@ -133,7 +129,7 @@ export default class GlobalDictionarySyncPlugin extends Plugin {
             },
             // Function to execute if user chooses to merge instead
             async () => {
-              const mergedCount = merge();
+              const mergedCount = await merge();
 
               new Notice(
                 `Dictionary merged: ${mergedCount} words added to global dictionary, ${wordsToAdd.length} words added to system`,
