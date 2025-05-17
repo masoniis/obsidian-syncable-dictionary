@@ -22,8 +22,22 @@ export default class GlobalDictionarySyncPlugin extends Plugin {
     await this.syncDictionaries(true);
 
     this.syncIntervalId = setInterval(async () => {
-      await this.checkForExternalChanges();
-      this.syncDictionaries(false, true);
+      const hasChanges = await this.checkForExternalChanges();
+      if (hasChanges) {
+        // sync without merging, we want the source of truth
+        // to destroy extra words
+        this.syncDictionaries(false, false);
+      } else {
+        // otherwise sync with merge
+        this.syncDictionaries(false, true);
+      }
+      const settingTab = this.app.setting.settingTabs.find(
+        (tab) => tab instanceof GlobalDictionarySettingTab,
+      ) as GlobalDictionarySettingTab | undefined;
+
+      if (settingTab && settingTab.containerEl.isShown()) {
+        settingTab.refresh();
+      }
     }, 15 * 1000);
 
     console.log("Global Dictionary: Set up automatic sync every 2 minutes");
@@ -169,18 +183,20 @@ export default class GlobalDictionarySyncPlugin extends Plugin {
 
     if (!latestData || !latestData.globalWords) return false;
 
-    // Find words that exist in disk data but not in current memory
-    const newWords = latestData.globalWords.filter(
-      (word) => !this.settings.globalWords.includes(word),
-    );
+    // Check if there are any differences between disk data and current memory
+    // by comparing lengths and contents
+    const currentWords = this.settings.globalWords;
+    const externalWords = latestData.globalWords;
 
-    if (newWords.length > 0) {
-      // Add new words to current settings
-      for (const word of newWords) {
-        this.settings.globalWords.push(word);
-      }
+    if (
+      currentWords.length !== externalWords.length ||
+      !currentWords.every((word) => externalWords.includes(word)) ||
+      !externalWords.every((word) => currentWords.includes(word))
+    ) {
+      // Completely replace current settings with external data
+      this.settings.globalWords = [...externalWords];
 
-      // Re-sort the combined list
+      // Re-sort the list
       this.settings.globalWords.sort((a: string, b: string) =>
         a.toLowerCase().localeCompare(b.toLowerCase()),
       );
@@ -195,7 +211,7 @@ export default class GlobalDictionarySyncPlugin extends Plugin {
       }
 
       console.log(
-        `Found ${newWords.length} new words in data.json, updated memory`,
+        `External settings file has changed, replaced in-memory dictionary with ${externalWords.length} words`,
       );
       return true;
     }

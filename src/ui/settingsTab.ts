@@ -16,8 +16,8 @@ export class GlobalDictionarySettingTab extends PluginSettingTab {
 
   refresh(): void {
     this.filteredWords = [...this.plugin.settings.globalWords];
-    this.renderWordsList();
     this.updateWordCount();
+    this.renderWordsList();
   }
 
   display(): void {

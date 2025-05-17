@@ -12,7 +12,6 @@ export class PrivateDictAPI {
   }
 
   addWord(newEntry: string) {
-    console.log(`ADDING WORD: ${newEntry}`);
     this.session.addWordToSpellCheckerDictionary(newEntry);
   }
 
