@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting, Notice, Platform } from "obsidian";
+import { App, PluginSettingTab, Setting, Notice } from "obsidian";
 import GlobalDictionarySyncPlugin from "../main";
 import { privateDictAPI } from "../privateDictAPI";
 
@@ -12,6 +12,12 @@ export class GlobalDictionarySettingTab extends PluginSettingTab {
   constructor(app: App, plugin: GlobalDictionarySyncPlugin) {
     super(app, plugin);
     this.plugin = plugin;
+  }
+
+  refresh(): void {
+    this.filteredWords = [...this.plugin.settings.globalWords];
+    this.renderWordsList();
+    this.updateWordCount();
   }
 
   display(): void {

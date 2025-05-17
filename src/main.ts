@@ -21,9 +21,9 @@ export default class GlobalDictionarySyncPlugin extends Plugin {
 
     await this.syncDictionaries(true);
 
-    this.syncIntervalId = setInterval(() => {
-      console.log("Syncing dictionaries");
-      this.syncDictionaries(false, true); // Don't show notices for background syncs
+    this.syncIntervalId = setInterval(async () => {
+      await this.checkForExternalChanges();
+      this.syncDictionaries(false, true);
     }, 15 * 1000);
 
     console.log("Global Dictionary: Set up automatic sync every 2 minutes");
@@ -161,6 +161,46 @@ export default class GlobalDictionarySyncPlugin extends Plugin {
     } catch (dictError) {
       console.error("Failed to sync dictionaries:", dictError);
     }
+  }
+
+  async checkForExternalChanges() {
+    // Load the latest data from disk
+    const latestData = (await this.loadData()) as GlobalDictionarySettings;
+
+    if (!latestData || !latestData.globalWords) return false;
+
+    // Find words that exist in disk data but not in current memory
+    const newWords = latestData.globalWords.filter(
+      (word) => !this.settings.globalWords.includes(word),
+    );
+
+    if (newWords.length > 0) {
+      // Add new words to current settings
+      for (const word of newWords) {
+        this.settings.globalWords.push(word);
+      }
+
+      // Re-sort the combined list
+      this.settings.globalWords.sort((a: string, b: string) =>
+        a.toLowerCase().localeCompare(b.toLowerCase()),
+      );
+
+      // refresh settings if open
+      const settingTab = this.app.setting.settingTabs.find(
+        (tab) => tab instanceof GlobalDictionarySettingTab,
+      ) as GlobalDictionarySettingTab | undefined;
+
+      if (settingTab && settingTab.containerEl.isShown()) {
+        settingTab.refresh();
+      }
+
+      console.log(
+        `Found ${newWords.length} new words in data.json, updated memory`,
+      );
+      return true;
+    }
+
+    return false;
   }
 
   async loadSettings() {
