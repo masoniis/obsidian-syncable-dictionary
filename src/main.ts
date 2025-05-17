@@ -6,7 +6,6 @@ import {
   Plugin,
   PluginSettingTab,
   Setting,
-  Platform,
   Modal,
   ButtonComponent,
 } from "obsidian";
@@ -182,6 +181,7 @@ class GlobalDictionarySettingTab extends PluginSettingTab {
   plugin: GlobalDictionarySyncPlugin;
   searchInput: HTMLInputElement;
   wordsList: HTMLElement;
+  countIndicator: HTMLElement;
   filteredWords: string[] = [];
 
   constructor(app: App, plugin: GlobalDictionarySyncPlugin) {
@@ -275,8 +275,12 @@ class GlobalDictionarySettingTab extends PluginSettingTab {
     const wordsContainer = containerEl.createDiv("dictionary-words-container");
     this.wordsList = wordsContainer.createDiv("dictionary-words-list");
 
-    const countIndicator = containerEl.createDiv("dictionary-count");
-    countIndicator.createSpan({
+    // const countIndicator = containerEl.createDiv("dictionary-count");
+    // countIndicator.createSpan({
+    //   text: `Total words in dictionary: ${this.plugin.settings.globalWords.length}`,
+    // });
+    this.countIndicator = containerEl.createDiv("dictionary-count");
+    this.countIndicator.createSpan({
       text: `Total words in dictionary: ${this.plugin.settings.globalWords.length}`,
     });
 
@@ -296,9 +300,19 @@ class GlobalDictionarySettingTab extends PluginSettingTab {
     this.renderWordsList();
   }
 
+  updateWordCount(): void {
+    if (this.countIndicator) {
+      this.countIndicator.empty();
+      this.countIndicator.createSpan({
+        text: `Total words in dictionary: ${this.plugin.settings.globalWords.length}`,
+      });
+    }
+  }
+
   renderWordsList(): void {
     this.wordsList.empty();
 
+    this.updateWordCount();
     if (this.filteredWords.length === 0) {
       if (this.searchInput.value) {
         this.wordsList.createEl("p", {
