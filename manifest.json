@@ -1,7 +1,7 @@
 {
 	"id": "obsidian-synced-dictionary",
 	"name": "Synced Dictionary",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"minAppVersion": "0.15.0",
 	"description": "Maintains a global list of custom words, synced across devices. Can sync this list to the native Obsidian custom dictionary on all devices.",
 	"author": "masoniis",
