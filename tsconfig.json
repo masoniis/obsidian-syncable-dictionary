@@ -16,7 +16,11 @@
       "ES5",
       "ES6",
       "ES7"
-    ]
+    ],
+		"types": [
+			"obsidian-typings",
+			"node"
+		]
   },
   "include": [
     "**/*.ts"
