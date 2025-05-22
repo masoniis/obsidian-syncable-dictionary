@@ -1,44 +1,48 @@
 import { Editor, MarkdownView, Notice, Plugin } from "obsidian";
 
 import { privateDictAPI } from "./privateDictAPI";
-import { GlobalDictionarySettingsTab } from "./ui/settingsTab";
+import { SyncableDictionarySettingsTab } from "./ui/settingsTab";
 import { DictionaryMergeModal } from "./ui/modal";
 
-interface GlobalDictionarySettings {
+interface SyncableDictionarySettings {
   globalWords: string[];
   warningThreshold: number;
+  syncPollingRate: number;
 }
 
-const DEFAULT_SETTINGS: GlobalDictionarySettings = {
+const DEFAULT_SETTINGS: SyncableDictionarySettings = {
   globalWords: [],
   warningThreshold: 5,
+  syncPollingRate: 15 * 1000,
 };
 
-export default class GlobalDictionarySyncPlugin extends Plugin {
-  settings: GlobalDictionarySettings;
-  settingsTab: GlobalDictionarySettingsTab;
+export default class SyncableDictionaryPlugin extends Plugin {
+  settings: SyncableDictionarySettings;
+  settingsTab: SyncableDictionarySettingsTab;
   syncIntervalId: NodeJS.Timeout;
 
   async onload() {
+    // Load settings and perform a destructive sync
     await this.loadSettings();
+    await this.syncDictionaries(true, false);
 
-    await this.syncDictionaries(true);
-
+    // Set up a periodic syncing interval
     this.syncIntervalId = setInterval(async () => {
       const hasChanges = await this.checkForExternalChanges();
       if (hasChanges) {
-        // sync without merging, we want the source of truth
-        // to destroy extra words
+        // Destrucively replace local dict with external dict
         this.syncDictionaries(false, false);
       } else {
-        // otherwise sync with merge
+        // Constructively combine local with external dict
         this.syncDictionaries(false, true);
       }
-    }, 15 * 1000);
+    }, this.settings.syncPollingRate);
 
-    console.log("Global Dictionary: Set up automatic sync every 2 minutes");
+    console.log(
+      `SyncableDictionary: Set up automatic sync every ${this.settings.syncPollingRate / 1000} seconds.`,
+    );
 
-    this.settingsTab = new GlobalDictionarySettingsTab(this.app, this);
+    this.settingsTab = new SyncableDictionarySettingsTab(this.app, this);
     this.addSettingTab(this.settingsTab);
 
     this.addCommand({
@@ -184,7 +188,7 @@ export default class GlobalDictionarySyncPlugin extends Plugin {
 
   async checkForExternalChanges() {
     // Load the latest data from disk
-    const latestData = (await this.loadData()) as GlobalDictionarySettings;
+    const latestData = (await this.loadData()) as SyncableDictionarySettings;
 
     if (!latestData || !latestData.globalWords) return false;
 

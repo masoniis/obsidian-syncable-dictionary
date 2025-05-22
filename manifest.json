@@ -3,7 +3,7 @@
 	"name": "Syncable Dictionary",
 	"version": "0.0.4",
 	"minAppVersion": "0.15.0",
-	"description": "Maintains a global list of custom words inside the `.obsidian` folder so that they can be synced across desktop devices (mobile devices use their own native dictionaries)",
+	"description": "Maintains a global list of custom words inside the `.obsidian` folder so that they can be synced across desktop devices",
 	"author": "masoniis",
 	"authorUrl": "https://masonbott.com",
 	"isDesktopOnly": true

@@ -1,15 +1,15 @@
 import { App, Modal, ButtonComponent } from "obsidian";
-import GlobalDictionarySyncPlugin from "../main";
+import SyncableDictionaryPlugin from "../main";
 
 export class DictionaryMergeModal extends Modal {
-  plugin: GlobalDictionarySyncPlugin;
+  plugin: SyncableDictionaryPlugin;
   wordsToRemove: string[];
   onConfirmRemove: () => void;
   onMerge: () => void;
 
   constructor(
     app: App,
-    plugin: GlobalDictionarySyncPlugin,
+    plugin: SyncableDictionaryPlugin,
     wordsToRemove: string[],
     onConfirmRemove: () => void,
     onMerge: () => void,

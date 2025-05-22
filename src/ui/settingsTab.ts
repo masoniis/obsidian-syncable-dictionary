@@ -1,15 +1,15 @@
 import { App, PluginSettingTab, Setting, Notice } from "obsidian";
-import GlobalDictionarySyncPlugin from "../main";
 import { privateDictAPI } from "../privateDictAPI";
+import SyncableDictionaryPlugin from "../main";
 
-export class GlobalDictionarySettingsTab extends PluginSettingTab {
-  plugin: GlobalDictionarySyncPlugin;
+export class SyncableDictionarySettingsTab extends PluginSettingTab {
+  plugin: SyncableDictionaryPlugin;
   searchInput: HTMLInputElement;
   wordsList: HTMLElement;
   countIndicator: HTMLElement;
   filteredWords: string[] = [];
 
-  constructor(app: App, plugin: GlobalDictionarySyncPlugin) {
+  constructor(app: App, plugin: SyncableDictionaryPlugin) {
     super(app, plugin);
     this.plugin = plugin;
   }

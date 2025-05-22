@@ -1,10 +1,10 @@
 {
-  "name": "obsidian-synced-dictionary",
-  "version": "0.0.1",
-  "description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+  "name": "obsidian-syncable-dictionary",
+  "version": "0.0.4",
+  "description": "Maintains a global list of custom words inside the `.obsidian` folder so that they can be synced across desktop devices",
   "main": "main.ts",
   "type": "module",
-  "keywords": ["dictionary"],
+  "keywords": ["dictionary", "sync", "obsidian", "md"],
   "author": "masoniis",
   "license": "MIT",
   "scripts": {
