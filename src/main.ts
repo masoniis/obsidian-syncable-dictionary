@@ -114,13 +114,13 @@ export default class GlobalDictionarySyncPlugin extends Plugin {
           return mergedCount;
         };
 
-        // If should merge, we return early since merge has already been decided
         if (shouldMerge) {
+          // if we merge we return early
           merge();
           return;
         }
 
-        // If we have 5 words or more to remove, show confirmation dialog
+        // If we surpass warning threshold, show confirmation dialog
         if (wordsToRemove.length >= this.settings.warningThreshold) {
           const modal = new DictionaryMergeModal(
             this.app,
@@ -198,10 +198,10 @@ export default class GlobalDictionarySyncPlugin extends Plugin {
       !currentWords.every((word) => externalWords.includes(word)) ||
       !externalWords.every((word) => currentWords.includes(word))
     ) {
-      // Completely replace current settings with external data
+      // completely replace current settings with external data
       this.settings.globalWords = [...externalWords];
 
-      // Re-sort the list
+      // resort the list
       this.settings.globalWords.sort((a: string, b: string) =>
         a.toLowerCase().localeCompare(b.toLowerCase()),
       );

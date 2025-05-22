@@ -188,7 +188,6 @@ export class GlobalDictionarySettingsTab extends PluginSettingTab {
   }
 
   addStyles() {
-    // Add a <style> element if needed for the dictionary styles
     if (!document.getElementById("global-dictionary-styles")) {
       const styleEl = document.head.createEl("style");
       styleEl.id = "global-dictionary-styles";
