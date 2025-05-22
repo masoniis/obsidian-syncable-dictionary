@@ -1,19 +1,22 @@
 import { Editor, MarkdownView, Notice, Plugin } from "obsidian";
 
 import { privateDictAPI } from "./privateDictAPI";
-import { GlobalDictionarySettingTab } from "./ui/settingsTab";
+import { GlobalDictionarySettingsTab } from "./ui/settingsTab";
 import { DictionaryMergeModal } from "./ui/modal";
 
 interface GlobalDictionarySettings {
   globalWords: string[];
+  warningThreshold: number;
 }
 
 const DEFAULT_SETTINGS: GlobalDictionarySettings = {
   globalWords: [],
+  warningThreshold: 5,
 };
 
 export default class GlobalDictionarySyncPlugin extends Plugin {
   settings: GlobalDictionarySettings;
+  settingsTab: GlobalDictionarySettingsTab;
   syncIntervalId: NodeJS.Timeout;
 
   async onload() {
@@ -31,18 +34,12 @@ export default class GlobalDictionarySyncPlugin extends Plugin {
         // otherwise sync with merge
         this.syncDictionaries(false, true);
       }
-      const settingTab = this.app.setting.settingTabs.find(
-        (tab) => tab instanceof GlobalDictionarySettingTab,
-      ) as GlobalDictionarySettingTab | undefined;
-
-      if (settingTab && settingTab.containerEl.isShown()) {
-        settingTab.refresh();
-      }
     }, 15 * 1000);
 
     console.log("Global Dictionary: Set up automatic sync every 2 minutes");
 
-    this.addSettingTab(new GlobalDictionarySettingTab(this.app, this));
+    this.settingsTab = new GlobalDictionarySettingsTab(this.app, this);
+    this.addSettingTab(this.settingsTab);
 
     this.addCommand({
       id: "add-selection-to-synced-dictionary",
@@ -92,23 +89,27 @@ export default class GlobalDictionarySyncPlugin extends Plugin {
 
         const merge = async (): Promise<number> => {
           let mergedCount = 0;
+          let madeChanges = false;
+
           for (const word of wordsToRemove) {
             if (!this.settings.globalWords.includes(word)) {
               this.settings.globalWords.push(word);
               mergedCount++;
+              madeChanges = true;
             }
           }
 
-          // Add missing words to system dictionary
+          // Add missing words to lcoal dictionary
           for (const word of wordsToAdd) {
             privateDictAPI.addWord(word);
           }
 
-          this.settings.globalWords.sort((a: string, b: string) =>
-            a.toLowerCase().localeCompare(b.toLowerCase()),
-          );
-
-          await this.saveSettings();
+          if (madeChanges) {
+            this.settings.globalWords.sort((a: string, b: string) =>
+              a.toLowerCase().localeCompare(b.toLowerCase()),
+            );
+            await this.saveSettings();
+          }
 
           return mergedCount;
         };
@@ -120,7 +121,7 @@ export default class GlobalDictionarySyncPlugin extends Plugin {
         }
 
         // If we have 5 words or more to remove, show confirmation dialog
-        if (wordsToRemove.length >= 5 && showNotice) {
+        if (wordsToRemove.length >= this.settings.warningThreshold) {
           const modal = new DictionaryMergeModal(
             this.app,
             this,
@@ -137,17 +138,21 @@ export default class GlobalDictionarySyncPlugin extends Plugin {
                 privateDictAPI.addWord(word);
               }
 
-              new Notice(
-                `Dictionary sync complete: ${wordsToAdd.length} words added, ${wordsToRemove.length} words removed`,
-              );
+              if (showNotice) {
+                new Notice(
+                  `Dictionary sync complete: ${wordsToAdd.length} words added, ${wordsToRemove.length} words removed`,
+                );
+              }
             },
             // Function to execute if user chooses to merge instead
             async () => {
               const mergedCount = await merge();
 
-              new Notice(
-                `Dictionary merged: ${mergedCount} words added to global dictionary, ${wordsToAdd.length} words added to system`,
-              );
+              if (showNotice) {
+                new Notice(
+                  `Dictionary merged: ${mergedCount} words added to global dictionary, ${wordsToAdd.length} words added to system`,
+                );
+              }
             },
           );
           modal.open();
@@ -201,14 +206,8 @@ export default class GlobalDictionarySyncPlugin extends Plugin {
         a.toLowerCase().localeCompare(b.toLowerCase()),
       );
 
-      // refresh settings if open
-      const settingTab = this.app.setting.settingTabs.find(
-        (tab) => tab instanceof GlobalDictionarySettingTab,
-      ) as GlobalDictionarySettingTab | undefined;
-
-      if (settingTab && settingTab.containerEl.isShown()) {
-        settingTab.refresh();
-      }
+      // refresh settings tab so that wordcounts and words update
+      this.settingsTab.refresh();
 
       console.log(
         `External settings file has changed, replaced in-memory dictionary with ${externalWords.length} words`,

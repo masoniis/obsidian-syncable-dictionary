@@ -2,7 +2,7 @@ import { App, PluginSettingTab, Setting, Notice } from "obsidian";
 import GlobalDictionarySyncPlugin from "../main";
 import { privateDictAPI } from "../privateDictAPI";
 
-export class GlobalDictionarySettingTab extends PluginSettingTab {
+export class GlobalDictionarySettingsTab extends PluginSettingTab {
   plugin: GlobalDictionarySyncPlugin;
   searchInput: HTMLInputElement;
   wordsList: HTMLElement;
@@ -73,9 +73,9 @@ export class GlobalDictionarySettingTab extends PluginSettingTab {
           );
           await this.plugin.saveSettings();
           new Notice(`'${word}' added to dictionary.`);
-          addWordInput.value = ""; // Clear the input
-          this.filterWords(); // Refresh the word list
-          this.updateWordCount(); // Update the word count
+          addWordInput.value = "";
+          this.filterWords();
+          this.updateWordCount();
         } else {
           new Notice(`'${word}' is already in your dictionary.`);
         }
@@ -84,8 +84,8 @@ export class GlobalDictionarySettingTab extends PluginSettingTab {
 
     // Combined Search and Dictionary Management
     const dictionarySetting = new Setting(containerEl)
-      .setName("Manage Global Dictionary")
-      .setDesc("Search, add, or remove words from your dictionary.");
+      .setName("Search Global Dictionary")
+      .setDesc("Search and remove words from your dictionary.");
 
     // Add search input to the setting
     const searchContainer = dictionarySetting.controlEl.createDiv(
