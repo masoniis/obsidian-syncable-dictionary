@@ -4,6 +4,9 @@ branches:
   # "v1.0.0-rc.1" : dev releases
   - { name: "staging", prerelease: "rc" }
 
+# obsidian doesn't like the "v" prefix, so we overwrite it here to just be the version and nothing else
+tagFormat: "${version}"
+
 plugins:
   - - "@semantic-release/commit-analyzer"
     - preset: "angular"
