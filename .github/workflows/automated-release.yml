@@ -1,0 +1,37 @@
+name: automatic semantic-release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - staging
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # to create GitHub Releases and Tags
+      issues: write # to comment on related issues
+      pull-requests: write # to comment on merged PRs
+      actions: write # required for deleting github cache entries in nix setup
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # semantic release needs full history to find tags
+
+      - name: Add nix flake profile
+        uses: ./.github/actions/add-nix-flake-profile
+        with:
+          flake-profile: "semanticRelease"
+
+      - name: Build plugin
+        run: |
+          bun install
+          bun run build
+
+      - name: Perform semantic release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          bunx semantic-release

@@ -1,0 +1,34 @@
+name: "Add nix flake profile"
+description: "A util that adds the `flake.nix` profile specified to the runner environment, defaulting to the flake's default profile"
+
+inputs:
+  flake-profile:
+    description: "The name of the flake package/profile to install (e.g., default, robloxDeployment)"
+    required: false
+    default: "default"
+
+runs:
+  using: "composite"
+  steps:
+    # install nix with determinate nix
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@v21
+      with:
+        determinate: false # doesn't try to log in to FlakeHub and install DeterminateNix stuff
+        diagnostic-endpoint: "" # don't send telemetry
+        extra-conf: |
+          auto-optimise-store = false
+
+    # enable cache for nix derivations
+    - name: Enable GitHub Actions Nix Cache
+      uses: nix-community/cache-nix-action@v7
+      with:
+        primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
+        restore-prefixes-first-match: nix-${{ runner.os }}-
+
+    - name: Install Nix flake packages to profile
+      shell: bash
+      # run with command true to immediately exit, we don't
+      # actually care about using the devshell at all here
+      run: |
+        nix profile add .#${{ inputs.flake-profile }}

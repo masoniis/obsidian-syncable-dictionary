@@ -1,0 +1,63 @@
+branches:
+  # "v1.0.0" : production releases
+  - { name: "main" }
+  # "v1.0.0-rc.1" : main/dev releases
+  - { name: "staging", prerelease: "rc" }
+
+plugins:
+  - - "@semantic-release/commit-analyzer"
+    - preset: "angular"
+      releaseRules:
+        - { type: "feat", release: "minor" }
+        - { type: "fix", release: "patch" }
+        - { type: "chore", release: false }
+        - { type: "docs", release: false }
+        - { type: "style", release: false }
+        - { type: "refactor", release: false }
+        - { type: "perf", release: false }
+        - { type: "test", release: false }
+
+  - - "@semantic-release/release-notes-generator"
+    - preset: "angular"
+      presetConfig:
+        types:
+          - { type: "feat", section: "Features | 🚀" }
+          - { type: "fix", section: "Bug Fixes | 🐛" }
+          - { type: "chore", section: "Maintenance | 😔", hidden: false }
+          - { type: "docs", section: "Documentation | 📜", hidden: false }
+          - { type: "style", section: "Style & Formatting | 🪮", hidden: true }
+          - {
+              type: "refactor",
+              section: "Architecture & Refactoring | 🌍",
+              hidden: false,
+            }
+          - {
+              type: "perf",
+              section: "Performance Improvements | 🧠",
+              hidden: false,
+            }
+          - { type: "test", section: "Tests | 🚨", hidden: false }
+
+  # update package.json version
+  - - "@semantic-release/npm"
+    - npmPublish: false
+
+  # update manifest.json version
+  - - "@semantic-release/exec"
+    - prepareCmd: "bun scripts/update-manifest.ts ${nextRelease.version} && bunx prettier --write manifest.json"
+
+  # commit the version bumps (package.json + manifest.json + lockfile)
+  - - "@semantic-release/git"
+    - assets:
+        - "package.json"
+        - "manifest.json"
+        - "bun.lockb"
+      message: "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+
+  # publish the release to GitHub with the build artifacts
+  - - "@semantic-release/github"
+    - assets:
+        - { path: "main.js", label: "main.js" }
+        - { path: "manifest.json", label: "manifest.json" }
+        - { path: "styles.css", label: "styles.css" }
+      successComment: false

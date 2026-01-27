@@ -1,0 +1,37 @@
+name: tree format with `nix fmt`
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # enable updating the repo code
+      actions: write # required for deleting github cache entries in nix setup
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true
+          fetch-depth: 0
+
+      # installs deps and makes nix available to runner path
+      - name: Add nix flake profile
+        uses: ./.github/actions/add-nix-flake-profile
+
+      - name: Run formatter
+        run: nix fmt
+
+      # commit changes only if changes were made by the format step
+      - name: Auto commit changes
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: "style: auto-format code [skip ci]"
+          commit_user_name: GitHub Action
+          commit_user_email: action@github.com
+          skip_dirty_check: false # only commit if dirty, as opposed to always

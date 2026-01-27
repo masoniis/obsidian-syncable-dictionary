@@ -1,10 +1,10 @@
 {
-	"id": "obsidian-syncable-dictionary",
-	"name": "Syncable Dictionary",
-	"version": "0.0.5",
-	"minAppVersion": "0.15.0",
-	"description": "Maintains a global list of custom words inside the `.obsidian` folder so that they can be synced across desktop devices",
-	"author": "masoniis",
-	"authorUrl": "https://masonbott.com",
-	"isDesktopOnly": true
+  "id": "obsidian-syncable-dictionary",
+  "name": "Syncable Dictionary",
+  "version": "1.0.0",
+  "minAppVersion": "0.15.0",
+  "description": "Maintains a global list of custom words inside the `.obsidian` folder so that they can be synced across desktop devices",
+  "author": "masoniis",
+  "authorUrl": "https://masonbott.com",
+  "isDesktopOnly": true
 }
