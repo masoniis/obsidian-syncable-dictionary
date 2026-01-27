@@ -1,7 +1,7 @@
 branches:
   # "v1.0.0" : production releases
   - { name: "main" }
-  # "v1.0.0-rc.1" : main/dev releases
+  # "v1.0.0-rc.1" : dev releases
   - { name: "staging", prerelease: "rc" }
 
 plugins:
