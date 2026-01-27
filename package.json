@@ -1,6 +1,6 @@
 {
   "name": "obsidian-syncable-dictionary",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Maintains a global list of custom words inside the `.obsidian` folder so that they can be synced across desktop devices",
   "main": "main.ts",
   "type": "module",
