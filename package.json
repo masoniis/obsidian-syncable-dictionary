@@ -1,6 +1,6 @@
 {
   "name": "obsidian-syncable-dictionary",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Maintains a global list of dictionary words and automatically updates the official spellcheck dictionary to match. This enables syncing of the official dictionary across desktop devices.",
   "main": "main.ts",
   "type": "module",
