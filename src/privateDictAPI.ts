@@ -1,60 +1,71 @@
-// INFO: ---------------------------
-//         target interfaces
-// ---------------------------------
+import type { Session } from "electron";
 
-interface ElectronSession {
-  addWordToSpellCheckerDictionary(word: string): void;
-  removeWordFromSpellCheckerDictionary(word: string): void;
-  listWordsInSpellCheckerDictionary(): Promise<string[]>;
+// INFO: -------------------------
+//         glue interfaces
+// -------------------------------
+
+// modern electron types removed 'remote', but obsidian
+// still provides it
+interface LegacyWebContents {
+  session: Session;
 }
 
-interface WebContents {
-  session: ElectronSession;
+interface LegacyRemote {
+  getCurrentWebContents(): LegacyWebContents;
 }
 
-interface ElectronRemote {
-  getCurrentWebContents(): WebContents;
-}
-
-interface ElectronModule {
-  remote: ElectronRemote;
+interface LegacyElectronModule {
+  remote: LegacyRemote;
 }
 
 // INFO: ------------------------
 //         concrete class
 // ------------------------------
 
-// NOTE: This class is prone to breaking because it relies on obsidian API private methods
-//
-// This relies on the [obsidian-typings](https://github.com/Fevol/obsidian-typings) library
-// and their work regarding the typing of internal undocumented APIs.
-export class PrivateDictAPI {
-  private session: ElectronSession | null = null;
+/**
+ * This class relies on targeting electron and hooking on to their Spellcheck API.
+ *
+ * This is because Obsidian internally uses the electron official spellchecker, so
+ * modifying the electron session's spellchecker also modifies the obsidian "built-in"
+ * dictionary, but of course this only works for the electron obsidian platforms.
+ */
+export class ElectronDictAPI {
+  private session: Session | null = null;
 
   constructor() {
-    // safely check if require can be called
+    // safely check if require can be called via Reflect
     const requireFn = Reflect.get(window, "require");
 
     if (typeof requireFn === "function") {
       try {
-        // try to load electron
-        const electron = requireFn("electron") as unknown as ElectronModule;
+        // try to load electron module dynamically
+        const electron = requireFn(
+          "electron",
+        ) as unknown as LegacyElectronModule;
 
+        // check for the legacy 'remote' property (obsidian should have this enabled)
         if (electron && electron.remote) {
           const remote = electron.remote;
           const currentWebContents = remote.getCurrentWebContents();
+
           this.session = currentWebContents.session;
+          console.debug(
+            "✅ PrivateDictAPI: Successfully hooked into Electron session.",
+          );
         } else {
           console.debug(
-            "PrivateDictAPI: Electron found, but 'remote' API is missing.",
+            "⚠️ PrivateDictAPI: Electron found, but 'remote' API is missing.",
           );
         }
       } catch (e) {
-        console.debug("Electron API not available via window.require: ", e);
+        console.debug(
+          "⚠️ PrivateDictAPI: Electron API not available via window.require: ",
+          e,
+        );
       }
     } else {
       console.debug(
-        "PrivateDictAPI: Not running in an Electron environment (maybe you are on mobile?).",
+        "ℹ️ PrivateDictAPI: Not running in an Electron environment (likely mobile).",
       );
     }
   }
@@ -62,7 +73,7 @@ export class PrivateDictAPI {
   /**
    * Safe guard to check if the specific electron method exists at runtime.
    */
-  private isMethodAvailable(methodName: keyof ElectronSession): boolean {
+  private isMethodAvailable(methodName: keyof Session): boolean {
     return (
       this.session !== null && typeof this.session[methodName] === "function"
     );
@@ -71,7 +82,7 @@ export class PrivateDictAPI {
   addWord(newEntry: string) {
     if (this.isMethodAvailable("addWordToSpellCheckerDictionary")) {
       try {
-        this.session!.addWordToSpellCheckerDictionary!(newEntry);
+        this.session!.addWordToSpellCheckerDictionary(newEntry);
       } catch (e) {
         console.warn(
           "Failed to add word to obsidian Spellcheck dictionary:",
@@ -84,7 +95,7 @@ export class PrivateDictAPI {
   removeWord(word: string) {
     if (this.isMethodAvailable("removeWordFromSpellCheckerDictionary")) {
       try {
-        this.session!.removeWordFromSpellCheckerDictionary!(word);
+        this.session!.removeWordFromSpellCheckerDictionary(word);
       } catch (e) {
         console.warn(
           "Failed to remove word from obsidian Spellcheck dictionary:",
@@ -97,7 +108,7 @@ export class PrivateDictAPI {
   async listWords(): Promise<string[]> {
     if (this.isMethodAvailable("listWordsInSpellCheckerDictionary")) {
       try {
-        return (await this.session!.listWordsInSpellCheckerDictionary!()) ?? [];
+        return (await this.session!.listWordsInSpellCheckerDictionary()) ?? [];
       } catch (e) {
         console.warn("Failed to list words from system dictionary:", e);
       }
@@ -106,4 +117,4 @@ export class PrivateDictAPI {
   }
 }
 
-export const privateDictAPI = new PrivateDictAPI();
+export const privateDictAPI = new ElectronDictAPI();
