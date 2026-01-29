@@ -2,7 +2,7 @@ import { Editor, MarkdownView, Notice, Plugin } from "obsidian";
 
 import { privateDictAPI } from "./electronDictAPI";
 import { SyncableDictionarySettingsTab } from "./ui/settingsTab";
-import { DictionaryMergeModal } from "./ui/modal";
+import { DictionaryMergeModal } from "./ui/mergeModal";
 import { DictionaryConflictModal } from "./ui/conflictModal";
 import { SyncableDictionarySettings, DEFAULT_SETTINGS } from "./types";
 import { DictionaryMerger } from "./dictionaryMerger";

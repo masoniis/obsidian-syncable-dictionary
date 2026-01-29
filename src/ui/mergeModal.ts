@@ -31,7 +31,7 @@ export class DictionaryMergeModal extends Modal {
     });
 
     contentEl.createEl("p", {
-      text: "Do you want to remove these, or merge them into the global synced dictionary?",
+      text: "Do you want to remove these words, or keep them by adding them back to the global dictionary",
     });
 
     // Create container for displaying words
@@ -64,7 +64,7 @@ export class DictionaryMergeModal extends Modal {
       });
 
     new ButtonComponent(buttonContainer)
-      .setButtonText("Merge words")
+      .setButtonText("Keep words")
       .onClick(() => {
         void this.onMerge();
         this.close();
