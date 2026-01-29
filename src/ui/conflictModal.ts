@@ -24,7 +24,7 @@ export class DictionaryConflictModal extends Modal {
     const { contentEl } = this;
     contentEl.empty();
 
-    contentEl.createEl("h2", { text: "Dictionary Sync Conflicts" });
+    contentEl.createEl("h2", { text: "Dictionary sync conflicts" });
     contentEl.createEl("p", {
       text: "The following words have conflicting changes between your local dictionary and the remote file. Please choose which action to take for each word.",
     });
@@ -43,8 +43,8 @@ export class DictionaryConflictModal extends Modal {
         )
         .addDropdown((dropdown) => {
           dropdown
-            .addOption("keep", "Keep Word")
-            .addOption("discard", "Delete Word")
+            .addOption("keep", "Keep word")
+            .addOption("discard", "Delete word")
             .setValue("keep")
             .onChange((value) => {
               this.resolutions.set(word, value === "keep");
@@ -55,7 +55,7 @@ export class DictionaryConflictModal extends Modal {
     // submit button
     new Setting(contentEl).addButton((btn) =>
       btn
-        .setButtonText("Resolve & Sync")
+        .setButtonText("Resolve & sync")
         .setCta()
         .onClick(() => {
           const wordsToKeep: string[] = [];

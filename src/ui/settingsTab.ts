@@ -25,9 +25,7 @@ export class SyncableDictionarySettingsTab extends PluginSettingTab {
     containerEl.empty();
     document.body.classList.add("global-dictionary-settings");
 
-    new Setting(containerEl)
-      .setName("Global dictionary sync settings")
-      .setHeading();
+    new Setting(containerEl).setName("Syncable Dictionary").setHeading();
 
     // new word input and add button
     const addWordSetting = new Setting(containerEl)
@@ -151,7 +149,7 @@ export class SyncableDictionarySettingsTab extends PluginSettingTab {
         });
       } else {
         this.wordsList.createEl("p", {
-          text: 'No words in the dictionary yet. Use the command "Add selection to Global Dictionary" to add some!',
+          text: 'No words in the dictionary yet. Use the command "Add selection to global dictionary" to add some!',
           cls: "dictionary-empty-message",
         });
       }

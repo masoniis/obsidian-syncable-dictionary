@@ -36,7 +36,7 @@ export default class SyncableDictionaryPlugin extends Plugin {
 
     this.addCommand({
       id: "add-selection-to-synced-dictionary",
-      name: "Add selection to Global Dictionary",
+      name: "Add selection to global dictionary",
       editorCallback: (editor: Editor, _: MarkdownView) => {
         const selection = editor.getSelection();
         if (selection) {
@@ -142,7 +142,7 @@ export default class SyncableDictionaryPlugin extends Plugin {
         // confirm Removal
         async () => {
           await this.finalizeSync(newGlobalWords, wordsToAdd, wordsToRemove);
-          if (showNotice) new Notice("Sync Complete: Deletions applied.");
+          if (showNotice) new Notice("Sync complete: Deletions applied.");
         },
         // cancel/merge (keep local words instead of deleting)
         async () => {
@@ -151,7 +151,7 @@ export default class SyncableDictionaryPlugin extends Plugin {
           const forcedKeepWords = [...newGlobalWords, ...wordsToRemove].sort();
           await this.finalizeSync(forcedKeepWords, wordsToAdd, []); // no removals
           if (showNotice)
-            new Notice("Sync Complete: Deletions cancelled, words kept.");
+            new Notice("Sync complete: Deletions cancelled, words kept.");
         },
       );
       modal.open();
