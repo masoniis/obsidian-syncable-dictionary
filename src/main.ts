@@ -1,20 +1,11 @@
 import { Editor, MarkdownView, Notice, Plugin } from "obsidian";
 
-import { privateDictAPI } from "./privateDictAPI";
+import { privateDictAPI } from "./electronDictAPI";
 import { SyncableDictionarySettingsTab } from "./ui/settingsTab";
 import { DictionaryMergeModal } from "./ui/modal";
-
-interface SyncableDictionarySettings {
-  globalWords: string[];
-  warningThreshold: number;
-  syncPollingRate: number;
-}
-
-const DEFAULT_SETTINGS: SyncableDictionarySettings = {
-  globalWords: [],
-  warningThreshold: 5,
-  syncPollingRate: 15 * 1000,
-};
+import { DictionaryConflictModal } from "./ui/conflictModal";
+import { SyncableDictionarySettings, DEFAULT_SETTINGS } from "./types";
+import { DictionaryMerger } from "./dictionaryMerger";
 
 export default class SyncableDictionaryPlugin extends Plugin {
   settings: SyncableDictionarySettings;
@@ -22,26 +13,22 @@ export default class SyncableDictionaryPlugin extends Plugin {
   syncIntervalId: NodeJS.Timeout;
 
   async onload() {
-    // Load settings and perform a destructive sync
     await this.loadSettings();
-    await this.syncDictionaries(true, false);
 
-    // Set up a periodic syncing interval
+    // initial sync: force a merge on startup to catch up with any changes while closed
+    await this.syncDictionaries(true);
+
+    // set up a periodic syncing interval
     this.syncIntervalId = setInterval(() => {
       void (async () => {
-        const hasChanges = await this.checkForExternalChanges();
-        if (hasChanges) {
-          // Destrucively replace local dict with external dict
-          await this.syncDictionaries(false, false);
-        } else {
-          // Constructively combine local with external dict
-          await this.syncDictionaries(false, true);
-        }
+        await this.syncDictionaries(false);
       })();
     }, this.settings.syncPollingRate);
 
     console.debug(
-      `SyncableDictionary: Set up automatic sync every ${this.settings.syncPollingRate / 1000} seconds.`,
+      `SyncableDictionary: Set up automatic sync every ${
+        this.settings.syncPollingRate / 1000
+      } seconds.`,
     );
 
     this.settingsTab = new SyncableDictionarySettingsTab(this.app, this);
@@ -55,11 +42,7 @@ export default class SyncableDictionaryPlugin extends Plugin {
         if (selection) {
           const word = selection.trim();
           if (word) {
-            privateDictAPI.addWord(word);
-            if (!this.settings.globalWords.includes(word)) {
-              this.settings.globalWords.push(word);
-              this.saveSettings();
-            }
+            void this.addWordImmediate(word);
           } else {
             new Notice("No word selected.");
           }
@@ -73,170 +56,153 @@ export default class SyncableDictionaryPlugin extends Plugin {
   onunload() {
     if (this.syncIntervalId) clearInterval(this.syncIntervalId);
 
-    // Final sync of dictionary before unloading
-    this.syncDictionaries(false, true).catch((e) =>
+    // final sync of dictionary before unloading
+    this.syncDictionaries(false).catch((e) =>
       console.error("Error during final dictionary sync:", e),
     );
   }
 
-  async syncDictionaries(
-    showNotice: boolean = false,
-    shouldMerge: boolean = false,
-  ) {
-    try {
-      const localWords = await privateDictAPI.listWords();
+  /**
+   * Adds a word to both Electron and Settings immediately to prevent race conditions.
+   */
+  async addWordImmediate(word: string) {
+    // visual feedback (fast)
+    privateDictAPI.addWord(word);
 
-      if (localWords && Array.isArray(localWords)) {
-        // Identify words to remove from local dictionary
-        const wordsToRemove = localWords.filter(
-          (word) => !this.settings.globalWords.includes(word),
-        );
-
-        // Identify words to add to local dictionary
-        const wordsToAdd = this.settings.globalWords.filter(
-          (word) => !localWords.includes(word),
-        );
-
-        const merge = async (): Promise<number> => {
-          let mergedCount = 0;
-          let madeChanges = false;
-
-          for (const word of wordsToRemove) {
-            if (!this.settings.globalWords.includes(word)) {
-              this.settings.globalWords.push(word);
-              mergedCount++;
-              madeChanges = true;
-            }
-          }
-
-          // Add missing words to lcoal dictionary
-          for (const word of wordsToAdd) {
-            privateDictAPI.addWord(word);
-          }
-
-          if (madeChanges) {
-            this.settings.globalWords.sort((a: string, b: string) =>
-              a.toLowerCase().localeCompare(b.toLowerCase()),
-            );
-            await this.saveSettings();
-          }
-
-          return mergedCount;
-        };
-
-        if (shouldMerge) {
-          // if we merge we return early
-          await merge();
-          return;
-        }
-
-        // If we surpass warning threshold, show confirmation dialog
-        if (wordsToRemove.length >= this.settings.warningThreshold) {
-          const modal = new DictionaryMergeModal(
-            this.app,
-            this,
-            wordsToRemove,
-            // Function to execute if user confirms removal
-            () => {
-              void (async () => {
-                // Remove words from system dictionary
-                for (const word of wordsToRemove) {
-                  privateDictAPI.removeWord(word);
-                }
-
-                // Add missing words to system dictionary
-                for (const word of wordsToAdd) {
-                  privateDictAPI.addWord(word);
-                }
-
-                if (showNotice) {
-                  new Notice(
-                    `Dictionary sync complete: ${wordsToAdd.length} words added, ${wordsToRemove.length} words removed`,
-                  );
-                }
-              })();
-            },
-            // Function to execute if user chooses to merge instead
-            () => {
-              void (async () => {
-                const mergedCount = await merge();
-
-                if (showNotice) {
-                  new Notice(
-                    `Dictionary merged: ${mergedCount} words added to global dictionary, ${wordsToAdd.length} words added to system`,
-                  );
-                }
-              })();
-            },
-          );
-          modal.open();
-        } else {
-          // If 5 or fewer words to remove, proceed with normal sync
-          let removedFromApiCount = 0;
-          for (const word of wordsToRemove) {
-            privateDictAPI.removeWord(word);
-            removedFromApiCount++;
-          }
-
-          let addedToApiCount = 0;
-          for (const word of wordsToAdd) {
-            privateDictAPI.addWord(word);
-            addedToApiCount++;
-          }
-
-          if ((addedToApiCount > 0 || removedFromApiCount > 0) && showNotice) {
-            new Notice(
-              `Dictionary sync complete: ${addedToApiCount} words added to system, ${removedFromApiCount} removed from system`,
-            );
-          }
-        }
-      }
-    } catch (dictError) {
-      console.error("Failed to sync dictionaries:", dictError);
+    // state update (safe)
+    if (!this.settings.globalWords.includes(word)) {
+      this.settings.globalWords.push(word);
+      // save immediately so the "Local" state is updated for the next sync
+      await this.saveSettings(false);
+      new Notice(`Added "${word}" to dictionary`);
     }
   }
 
-  async checkForExternalChanges() {
-    // Load the latest data from disk
-    const latestData = (await this.loadData()) as SyncableDictionarySettings;
+  /**
+   * The Core Sync Loop.
+   * Uses 3-way merge to reconcile Disk (Remote) vs Memory (Local) vs History (Snapshot).
+   */
+  async syncDictionaries(showNotice: boolean = false) {
+    try {
+      // load remote state (from disk)
+      const diskData = await this.loadData();
+      const remoteWords = (diskData?.globalWords as string[]) || [];
 
-    if (!latestData || !latestData.globalWords) return false;
+      // load local state (from memory)
+      const localWords = this.settings.globalWords;
+      const snapshot = this.settings.lastSnapshot;
 
-    // Check if there are any differences between disk data and current memory
-    // by comparing lengths and contents
-    const currentWords = this.settings.globalWords;
-    const externalWords = latestData.globalWords;
+      // merge and handle conflicts
+      const result = DictionaryMerger.merge(snapshot, localWords, remoteWords);
+      if (result.conflicts.length > 0) {
+        // pause sync and ask user to resolve
+        new DictionaryConflictModal(
+          this.app,
+          result.conflicts,
+          async (resolvedWords) => {
+            // merge resolved words back into the final set
+            const combinedSet = new Set([
+              ...result.finalWords,
+              ...resolvedWords,
+            ]);
+            const finalWords = Array.from(combinedSet).sort((a, b) =>
+              a.toLowerCase().localeCompare(b.toLowerCase()),
+            );
 
-    if (
-      currentWords.length !== externalWords.length ||
-      !currentWords.every((word) => externalWords.includes(word)) ||
-      !externalWords.every((word) => currentWords.includes(word))
-    ) {
-      // completely replace current settings with external data
-      this.settings.globalWords = [...externalWords];
+            await this.finishSyncProcess(finalWords, showNotice);
+          },
+        ).open();
+        return;
+      }
 
-      // resort the list
-      this.settings.globalWords.sort((a: string, b: string) =>
-        a.toLowerCase().localeCompare(b.toLowerCase()),
-      );
-
-      // refresh settings tab so that wordcounts and words update
-      this.settingsTab.refresh();
-
-      console.debug(
-        `External settings file has changed, replaced in-memory dictionary with ${externalWords.length} words`,
-      );
-      return true;
+      await this.finishSyncProcess(result.finalWords, showNotice);
+    } catch (e) {
+      console.error("Failed to sync dictionaries:", e);
     }
+  }
 
-    return false;
+  /**
+   * Completes the sync process: calculates diffs, checks thresholds, and saves.
+   */
+  async finishSyncProcess(newGlobalWords: string[], showNotice: boolean) {
+    // calculate effect on electron
+    const electronWords = (await privateDictAPI.listWords()) || [];
+    const wordsToAdd = newGlobalWords.filter((w) => !electronWords.includes(w));
+    const wordsToRemove = electronWords.filter(
+      (w) => !newGlobalWords.includes(w),
+    );
+
+    // check thresholds (safety warning)
+    if (wordsToRemove.length >= this.settings.warningThreshold) {
+      const modal = new DictionaryMergeModal(
+        this.app,
+        this,
+        wordsToRemove,
+        // confirm Removal
+        async () => {
+          await this.finalizeSync(newGlobalWords, wordsToAdd, wordsToRemove);
+          if (showNotice) new Notice("Sync Complete: Deletions applied.");
+        },
+        // cancel/merge (keep local words instead of deleting)
+        async () => {
+          // if user refuses deletion, words are treated as "New Local Additions"
+          // by adding them back to the new global list.
+          const forcedKeepWords = [...newGlobalWords, ...wordsToRemove].sort();
+          await this.finalizeSync(forcedKeepWords, wordsToAdd, []); // no removals
+          if (showNotice)
+            new Notice("Sync Complete: Deletions cancelled, words kept.");
+        },
+      );
+      modal.open();
+      return;
+    } else {
+      // execute sync normally
+      await this.finalizeSync(newGlobalWords, wordsToAdd, wordsToRemove);
+
+      if (showNotice && (wordsToAdd.length > 0 || wordsToRemove.length > 0)) {
+        new Notice(
+          `Dictionary synced: +${wordsToAdd.length} / -${wordsToRemove.length}`,
+        );
+      }
+    }
+  }
+
+  /**
+   * Applies the calculated state to all data stores: Settings, Snapshot, Disk, and Electron.
+   */
+  async finalizeSync(
+    newGlobalWords: string[],
+    toAdd: string[],
+    toRemove: string[],
+  ) {
+    // update obsidian's electron "native" dict
+    for (const w of toAdd) privateDictAPI.addWord(w);
+    for (const w of toRemove) privateDictAPI.removeWord(w);
+
+    // update settings values (stored in memory)
+    this.settings.globalWords = newGlobalWords;
+
+    // update snapshot (current state) and save to disk
+    this.settings.lastSnapshot = [...newGlobalWords];
+    await this.saveData(this.settings);
+
+    // refresh UI
+    this.settingsTab?.refresh();
   }
 
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
   }
 
-  async saveSettings() {
+  /**
+   * Saves settings.
+   * @param updateSnapshot - If true, updates the snapshot to match current words.
+   * Usually true after a sync, false after a local user action (pending sync).
+   */
+  async saveSettings(updateSnapshot: boolean = false) {
+    if (updateSnapshot) {
+      this.settings.lastSnapshot = [...this.settings.globalWords];
+    }
     await this.saveData(this.settings);
   }
 }

@@ -4,15 +4,15 @@ import SyncableDictionaryPlugin from "../main";
 export class DictionaryMergeModal extends Modal {
   plugin: SyncableDictionaryPlugin;
   wordsToRemove: string[];
-  onConfirmRemove: () => void;
-  onMerge: () => void;
+  onConfirmRemove: () => void | Promise<void>;
+  onMerge: () => void | Promise<void>;
 
   constructor(
     app: App,
     plugin: SyncableDictionaryPlugin,
     wordsToRemove: string[],
-    onConfirmRemove: () => void,
-    onMerge: () => void,
+    onConfirmRemove: () => void | Promise<void>,
+    onMerge: () => void | Promise<void>,
   ) {
     super(app);
     this.plugin = plugin;
@@ -59,14 +59,14 @@ export class DictionaryMergeModal extends Modal {
       .setButtonText(`Remove ${this.wordsToRemove.length} words`)
       .setCta()
       .onClick(() => {
-        this.onConfirmRemove();
+        void this.onConfirmRemove();
         this.close();
       });
 
     new ButtonComponent(buttonContainer)
       .setButtonText("Merge words")
       .onClick(() => {
-        this.onMerge();
+        void this.onMerge();
         this.close();
       });
   }

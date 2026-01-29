@@ -1,5 +1,5 @@
 import { App, PluginSettingTab, Setting, Notice } from "obsidian";
-import { privateDictAPI } from "../privateDictAPI";
+import { privateDictAPI } from "../electronDictAPI";
 import SyncableDictionaryPlugin from "../main";
 
 export class SyncableDictionarySettingsTab extends PluginSettingTab {
