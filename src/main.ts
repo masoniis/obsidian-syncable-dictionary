@@ -27,18 +27,20 @@ export default class SyncableDictionaryPlugin extends Plugin {
     await this.syncDictionaries(true, false);
 
     // Set up a periodic syncing interval
-    this.syncIntervalId = setInterval(async () => {
-      const hasChanges = await this.checkForExternalChanges();
-      if (hasChanges) {
-        // Destrucively replace local dict with external dict
-        this.syncDictionaries(false, false);
-      } else {
-        // Constructively combine local with external dict
-        this.syncDictionaries(false, true);
-      }
+    this.syncIntervalId = setInterval(() => {
+      void (async () => {
+        const hasChanges = await this.checkForExternalChanges();
+        if (hasChanges) {
+          // Destrucively replace local dict with external dict
+          await this.syncDictionaries(false, false);
+        } else {
+          // Constructively combine local with external dict
+          await this.syncDictionaries(false, true);
+        }
+      })();
     }, this.settings.syncPollingRate);
 
-    console.log(
+    console.debug(
       `SyncableDictionary: Set up automatic sync every ${this.settings.syncPollingRate / 1000} seconds.`,
     );
 
@@ -120,7 +122,7 @@ export default class SyncableDictionaryPlugin extends Plugin {
 
         if (shouldMerge) {
           // if we merge we return early
-          merge();
+          await merge();
           return;
         }
 
@@ -131,32 +133,36 @@ export default class SyncableDictionaryPlugin extends Plugin {
             this,
             wordsToRemove,
             // Function to execute if user confirms removal
-            async () => {
-              // Remove words from system dictionary
-              for (const word of wordsToRemove) {
-                privateDictAPI.removeWord(word);
-              }
+            () => {
+              void (async () => {
+                // Remove words from system dictionary
+                for (const word of wordsToRemove) {
+                  privateDictAPI.removeWord(word);
+                }
 
-              // Add missing words to system dictionary
-              for (const word of wordsToAdd) {
-                privateDictAPI.addWord(word);
-              }
+                // Add missing words to system dictionary
+                for (const word of wordsToAdd) {
+                  privateDictAPI.addWord(word);
+                }
 
-              if (showNotice) {
-                new Notice(
-                  `Dictionary sync complete: ${wordsToAdd.length} words added, ${wordsToRemove.length} words removed`,
-                );
-              }
+                if (showNotice) {
+                  new Notice(
+                    `Dictionary sync complete: ${wordsToAdd.length} words added, ${wordsToRemove.length} words removed`,
+                  );
+                }
+              })();
             },
             // Function to execute if user chooses to merge instead
-            async () => {
-              const mergedCount = await merge();
+            () => {
+              void (async () => {
+                const mergedCount = await merge();
 
-              if (showNotice) {
-                new Notice(
-                  `Dictionary merged: ${mergedCount} words added to global dictionary, ${wordsToAdd.length} words added to system`,
-                );
-              }
+                if (showNotice) {
+                  new Notice(
+                    `Dictionary merged: ${mergedCount} words added to global dictionary, ${wordsToAdd.length} words added to system`,
+                  );
+                }
+              })();
             },
           );
           modal.open();
@@ -213,7 +219,7 @@ export default class SyncableDictionaryPlugin extends Plugin {
       // refresh settings tab so that wordcounts and words update
       this.settingsTab.refresh();
 
-      console.log(
+      console.debug(
         `External settings file has changed, replaced in-memory dictionary with ${externalWords.length} words`,
       );
       return true;

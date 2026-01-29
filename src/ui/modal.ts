@@ -24,7 +24,7 @@ export class DictionaryMergeModal extends Modal {
   onOpen() {
     const { contentEl } = this;
 
-    contentEl.createEl("h2", { text: "Dictionary Sync Conflict" });
+    contentEl.createEl("h2", { text: "Dictionary sync conflict" });
 
     contentEl.createEl("p", {
       text: `${this.wordsToRemove.length} words (shown below) will be removed from your local dictionary based on the synced dictionary.`,
@@ -56,7 +56,7 @@ export class DictionaryMergeModal extends Modal {
 
     const buttonContainer = contentEl.createDiv("dictionary-merge-buttons");
     new ButtonComponent(buttonContainer)
-      .setButtonText(`Remove ${this.wordsToRemove.length} Words`)
+      .setButtonText(`Remove ${this.wordsToRemove.length} words`)
       .setCta()
       .onClick(() => {
         this.onConfirmRemove();
@@ -64,37 +64,11 @@ export class DictionaryMergeModal extends Modal {
       });
 
     new ButtonComponent(buttonContainer)
-      .setButtonText("Merge Words")
+      .setButtonText("Merge words")
       .onClick(() => {
         this.onMerge();
         this.close();
       });
-
-    contentEl.createEl("style", {
-      text: `
-        .dictionary-merge-words-container {
-          max-height: 200px;
-          overflow-y: auto;
-          border: 1px solid var(--background-modifier-border);
-          border-radius: 4px;
-          padding: 8px;
-          margin-bottom: 16px;
-        }
-        
-        .dictionary-merge-more-text {
-          text-align: center;
-          font-style: italic;
-          color: var(--text-muted);
-        }
-        
-        .dictionary-merge-buttons {
-          display: flex;
-          justify-content: space-around;
-          margin-top: 20px;
-          gap: 10px;
-        }
-      `,
-    });
   }
 
   onClose() {
