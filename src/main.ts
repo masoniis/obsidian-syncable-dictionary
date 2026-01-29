@@ -56,6 +56,10 @@ export default class SyncableDictionaryPlugin extends Plugin {
           const word = selection.trim();
           if (word) {
             privateDictAPI.addWord(word);
+            if (!this.settings.globalWords.includes(word)) {
+              this.settings.globalWords.push(word);
+              this.saveSettings();
+            }
           } else {
             new Notice("No word selected.");
           }
