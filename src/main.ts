@@ -15,10 +15,7 @@ export default class SyncableDictionaryPlugin extends Plugin {
   async onload() {
     await this.loadSettings();
 
-    // load any words from spellcheck dictionary
-    await this.importNativeWords();
-
-    // initial sync: force a merge on startup to catch up with any changes while closed
+    // initial sync: force a merge on startup.
     await this.syncDictionaries(true);
 
     // set up a periodic syncing interval
@@ -66,47 +63,15 @@ export default class SyncableDictionaryPlugin extends Plugin {
   }
 
   /**
-   * Scans the native Electron dictionary and adds any unknown words
-   * to our local settings. This prevents the plugin from seeing existing
-   * words as "stray data" and deleting them for initial load.
-   */
-  async importNativeWords() {
-    try {
-      const nativeWords = await privateDictAPI.listWords();
-      let modified = false;
-
-      for (const word of nativeWords) {
-        if (!this.settings.globalWords.includes(word)) {
-          this.settings.globalWords.push(word);
-          modified = true;
-          console.debug(`Imported native word: ${word}`);
-        }
-      }
-
-      // if we found new words, save them to disk immediately so the
-      // sync logic sees them as part of "Local State"
-      if (modified) {
-        await this.saveSettings(false);
-      }
-    } catch (e) {
-      console.warn("Failed to import native words on startup:", e);
-    }
-  }
-
-  /**
-   * Adds a word to both Electron and Settings immediately to prevent race conditions.
+   * Adds a word to Electron Spellchecker immediately.
    */
   async addWordImmediate(word: string) {
     // visual feedback (fast)
     privateDictAPI.addWord(word);
+    new Notice(`Added "${word}" to dictionary`);
 
-    // state update (safe)
-    if (!this.settings.globalWords.includes(word)) {
-      this.settings.globalWords.push(word);
-      // save immediately so the "Local" state is updated for the next sync
-      await this.saveSettings(false);
-      new Notice(`Added "${word}" to dictionary`);
-    }
+    // trigger a save so it goes to disk immediately
+    await this.syncDictionaries(false);
   }
 
   /**
@@ -119,8 +84,13 @@ export default class SyncableDictionaryPlugin extends Plugin {
       const diskData = await this.loadData();
       const remoteWords = (diskData?.globalWords as string[]) || [];
 
-      // load local state (from memory)
-      const localWords = this.settings.globalWords;
+      // load local state (from Electron list)
+      const electronWords = await privateDictAPI.listWords();
+
+      // if electron fails, don't run sync
+      if (!electronWords) return;
+
+      const localWords = electronWords;
       const snapshot = this.settings.lastSnapshot;
 
       // merge and handle conflicts
