@@ -61,22 +61,17 @@ export class SyncableDictionarySettingsTab extends PluginSettingTab {
         if (word) {
           if (!this.plugin.settings.globalWords.includes(word)) {
             try {
-              privateDictAPI.addWord(word);
+              await this.plugin.addWordImmediate(word);
+
+              // refresh ui
+              addWordInput.value = "";
+              this.filterWords();
+              this.updateWordCount();
             } catch (e) {
               new Notice(
                 `NOTE: Updating dict doesn't work on iOS (untested on android).\n\n Can't update dictionary: ${e}.`,
               );
-              return;
             }
-            this.plugin.settings.globalWords.push(word);
-            this.plugin.settings.globalWords.sort((a, b) =>
-              a.toLowerCase().localeCompare(b.toLowerCase()),
-            );
-            await this.plugin.saveSettings();
-            new Notice(`'${word}' added to dictionary.`);
-            addWordInput.value = "";
-            this.filterWords();
-            this.updateWordCount();
           } else {
             new Notice(`'${word}' is already in your dictionary.`);
           }
@@ -122,13 +117,16 @@ export class SyncableDictionarySettingsTab extends PluginSettingTab {
   }
 
   filterWords(): void {
+    // always refresh from source of truth before filtering
+    const allWords = this.plugin.settings.globalWords;
+
     const searchTerm = this.searchInput.value.toLowerCase();
     if (searchTerm) {
-      this.filteredWords = this.plugin.settings.globalWords.filter((word) =>
+      this.filteredWords = allWords.filter((word) =>
         word.toLowerCase().includes(searchTerm),
       );
     } else {
-      this.filteredWords = [...this.plugin.settings.globalWords];
+      this.filteredWords = [...allWords];
     }
     this.renderWordsList();
   }
@@ -174,13 +172,15 @@ export class SyncableDictionarySettingsTab extends PluginSettingTab {
       removeButton.addEventListener("click", () => {
         void (async () => {
           try {
+            // remove from electron and sync
             privateDictAPI.removeWord(word);
-            this.plugin.settings.globalWords =
-              this.plugin.settings.globalWords.filter((w) => w !== word);
-            await this.plugin.saveSettings();
+            await this.plugin.syncDictionaries(false);
+
             new Notice(`'${word}' removed from dictionary.`);
-            this.filterWords(); // refresh the display
-            this.updateWordCount(); // update the word count
+
+            // refresh ui
+            this.filterWords();
+            this.updateWordCount();
           } catch (e) {
             new Notice(`Error removing word: ${e}.`);
           }
