@@ -15,6 +15,9 @@ export default class SyncableDictionaryPlugin extends Plugin {
   async onload() {
     await this.loadSettings();
 
+    // load any words from spellcheck dictionary
+    await this.importNativeWords();
+
     // initial sync: force a merge on startup to catch up with any changes while closed
     await this.syncDictionaries(true);
 
@@ -60,6 +63,34 @@ export default class SyncableDictionaryPlugin extends Plugin {
     this.syncDictionaries(false).catch((e) =>
       console.error("Error during final dictionary sync:", e),
     );
+  }
+
+  /**
+   * Scans the native Electron dictionary and adds any unknown words
+   * to our local settings. This prevents the plugin from seeing existing
+   * words as "stray data" and deleting them for initial load.
+   */
+  async importNativeWords() {
+    try {
+      const nativeWords = await privateDictAPI.listWords();
+      let modified = false;
+
+      for (const word of nativeWords) {
+        if (!this.settings.globalWords.includes(word)) {
+          this.settings.globalWords.push(word);
+          modified = true;
+          console.debug(`Imported native word: ${word}`);
+        }
+      }
+
+      // if we found new words, save them to disk immediately so the
+      // sync logic sees them as part of "Local State"
+      if (modified) {
+        await this.saveSettings(false);
+      }
+    } catch (e) {
+      console.warn("Failed to import native words on startup:", e);
+    }
   }
 
   /**
