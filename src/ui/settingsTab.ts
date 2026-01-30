@@ -25,7 +25,7 @@ export class SyncableDictionarySettingsTab extends PluginSettingTab {
     containerEl.empty();
     document.body.classList.add("global-dictionary-settings");
 
-    new Setting(containerEl).setName("Dictionary Syncing").setHeading();
+    new Setting(containerEl).setName("Dictionary syncing").setHeading();
 
     // new word input and add button
     const addWordSetting = new Setting(containerEl)
