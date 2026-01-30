@@ -142,7 +142,7 @@ export default class SyncableDictionaryPlugin extends Plugin {
         // confirm Removal
         async () => {
           await this.finalizeSync(newGlobalWords, wordsToAdd, wordsToRemove);
-          if (showNotice) new Notice("Sync complete: Deletions applied.");
+          if (showNotice) new Notice("Sync complete: deletions applied.");
         },
         // cancel/merge (keep local words instead of deleting)
         async () => {
@@ -151,7 +151,7 @@ export default class SyncableDictionaryPlugin extends Plugin {
           const forcedKeepWords = [...newGlobalWords, ...wordsToRemove].sort();
           await this.finalizeSync(forcedKeepWords, wordsToAdd, []); // no removals
           if (showNotice)
-            new Notice("Sync complete: Deletions cancelled, words kept.");
+            new Notice("Sync complete: deletions cancelled, words kept.");
         },
       );
       modal.open();
