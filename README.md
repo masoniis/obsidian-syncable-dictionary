@@ -2,25 +2,25 @@
 
 This plugin maintains a global list of custom words inside the `.obsidian` folder so that they can be synced across **desktop (and only desktop) devices** without the user having to worry about it. If you use something like **Obsidian Sync** then your dictionary should be synced automatically through the plugin's settings assuming you have the right sync options enabled!
 
+> [!important]
+>
+> This plugin only makes the native custom dictionary **possible** to sync, it does not **sync** on its own
+>
+> That is to say, you still need to have a syncing system such as Obsidian Sync set up. This plugin just moves the information of the dictionary to a **syncable location** (namely the plugin's config inside `.obsidian` folder).
+
 ## ⚠️ Warnings ⚠️
 
 > [!WARNING]
 >
-> **This plugin only makes the plugin syncable, the way it syncs is still up to the user**
+> **Electron Session API Usage**
 >
-> You still need to have a syncing system such as Obsidian Sync set up. This plugin just moves the information of the dictionary to a **syncable location** (namely the plugin's config inside `.obsidian` folder).
+> The plugin relies on calls to the "internal" electron session and its dictionary API to control the "official" obsidian dictionary which relies on the same API. If Obsidian decides to change the way they handle their dictionary or revoke plugins from having access to said API, this plugin may suddenly break.
 
 > [!WARNING]
 >
-> **Private API Usage**
+> **Dictionary Backup Recommended**
 >
-> The plugin relies on calls to private Obsidian APIs to manage the Obsidian dictionary. These could break unexpectedly.
-
-> [!WARNING]
->
-> **Backup Recommended**
->
-> I recommend you create a backup of your dictionary if you have many important entries as the plugin has currently only been tested by me.
+> In the case where you have a large dictionary with many important entries, I recommend you create a backup of your dictionary. While this plugin has safety features in place to prevent a large amount of words from ever being removed from your dictionary without user approval, it is still safest to err on the side of caution.
 
 ## No mobile support?
 
