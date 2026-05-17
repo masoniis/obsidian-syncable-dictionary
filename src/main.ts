@@ -10,7 +10,7 @@ import { DictionaryMerger } from "./dictionaryMerger";
 export default class SyncableDictionaryPlugin extends Plugin {
   settings: SyncableDictionarySettings;
   settingsTab: SyncableDictionarySettingsTab;
-  syncIntervalId: NodeJS.Timeout;
+  syncIntervalId: number;
 
   async onload() {
     await this.loadSettings();
@@ -19,7 +19,7 @@ export default class SyncableDictionaryPlugin extends Plugin {
     await this.syncDictionaries(true);
 
     // set up a periodic syncing interval
-    this.syncIntervalId = setInterval(() => {
+    this.syncIntervalId = activeWindow.setInterval(() => {
       void (async () => {
         await this.syncDictionaries(false);
       })();
@@ -54,7 +54,7 @@ export default class SyncableDictionaryPlugin extends Plugin {
   }
 
   onunload() {
-    if (this.syncIntervalId) clearInterval(this.syncIntervalId);
+    if (this.syncIntervalId) activeWindow.clearInterval(this.syncIntervalId);
 
     // final sync of dictionary before unloading
     this.syncDictionaries(false).catch((e) =>
@@ -81,8 +81,9 @@ export default class SyncableDictionaryPlugin extends Plugin {
   async syncDictionaries(showNotice: boolean = false) {
     try {
       // load remote state (from disk)
-      const diskData = await this.loadData();
-      const remoteWords = (diskData?.globalWords as string[]) || [];
+      const diskData =
+        (await this.loadData()) as SyncableDictionarySettings | null;
+      const remoteWords = diskData?.globalWords || [];
 
       // load local state (from Electron list)
       const electronWords = await privateDictAPI.listWords();
@@ -192,7 +193,11 @@ export default class SyncableDictionaryPlugin extends Plugin {
   }
 
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    this.settings = Object.assign(
+      {},
+      DEFAULT_SETTINGS,
+      (await this.loadData()) as SyncableDictionarySettings | null,
+    );
   }
 
   /**

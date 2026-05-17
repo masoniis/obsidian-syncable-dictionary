@@ -23,7 +23,7 @@ export class SyncableDictionarySettingsTab extends PluginSettingTab {
   display(): void {
     const { containerEl } = this;
     containerEl.empty();
-    document.body.classList.add("global-dictionary-settings");
+    activeDocument.body.classList.add("global-dictionary-settings");
 
     new Setting(containerEl).setName("Dictionary syncing").setHeading();
 
