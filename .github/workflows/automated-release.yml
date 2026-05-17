@@ -15,6 +15,8 @@ jobs:
       issues: write # to comment on related issues
       pull-requests: write # to comment on merged PRs
       actions: write # required for deleting github cache entries in nix setup
+      id-token: write # required for artifact attestations
+      attestations: write # required for artifact attestations
     steps:
       - uses: actions/checkout@v4
         with:
@@ -29,6 +31,14 @@ jobs:
         run: |
           bun install
           bun run build
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            main.js
+            styles.css
+            manifest.json
 
       - name: Perform semantic release
         env:
