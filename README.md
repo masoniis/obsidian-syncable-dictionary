@@ -33,7 +33,7 @@ There are two different ways this plugin syncs words
 1. **MERGE**: Merge a local device dictionary into the plugin's global list. This always results in a equal-size or larger global dictionary that will be synced across future devices.
 2. **REPLACE**: Replace the local dictionary with the global list word-for-word. This may delete local entries, so as a failsafe, if more than 5 local entries are to be deleted, you will get a popup offering a merge.
 
-Every 15 seconds (todo: configurable period) the plugin checks for internal changes to the local dictionary (you added/removed words on your local device) and external changes to the global dictionary (you added/removed entries on another device).
+Every 15 seconds (configurable in settings) the plugin checks for internal changes to the local dictionary (you added/removed words on your local device) and external changes to the global dictionary (you added/removed entries on another device).
 
 - If there were external changes, we **REPLACE** the local dictionary with the global dictionary. If only external changes occurred, we can trust them as it must mean it is the most recent copy of the global dictionary.
 - If there were only local changes, we **MERGE** the local dictionary with the global dictionary.
