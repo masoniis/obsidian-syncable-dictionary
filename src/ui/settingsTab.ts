@@ -16,6 +16,7 @@ export class SyncableDictionarySettingsTab extends PluginSettingTab {
 
   refresh(): void {
     this.filteredWords = [...this.plugin.settings.globalWords];
+    if (!this.wordsList) return;
     this.updateWordCount();
     this.renderWordsList();
   }
