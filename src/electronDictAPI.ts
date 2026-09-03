@@ -1,4 +1,11 @@
-import type { Session } from "electron";
+/**
+ * Minimal interface representing the Electron Session object for dictionary modification.
+ */
+export interface Session {
+  addWordToSpellCheckerDictionary(word: string): boolean;
+  removeWordFromSpellCheckerDictionary(word: string): void;
+  listWordsInSpellCheckerDictionary(): Promise<string[]>;
+}
 
 // INFO: -------------------------
 //         glue interfaces
