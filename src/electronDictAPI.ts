@@ -57,22 +57,22 @@ export class ElectronDictAPI {
 
           this.session = currentWebContents.session;
           console.debug(
-            "✅ PrivateDictAPI: Successfully hooked into Electron session.",
+            "ElectronDictAPI: Successfully hooked into Electron session.",
           );
         } else {
-          console.debug(
-            "⚠️ PrivateDictAPI: Electron found, but 'remote' API is missing.",
+          console.warn(
+            "ElectronDictAPI: Electron found, but 'remote' API is missing.",
           );
         }
       } catch (e) {
-        console.debug(
-          "⚠️ PrivateDictAPI: Electron API not available via window.require: ",
+        console.warn(
+          "ElectronDictAPI: Electron API not available via window.require: ",
           e,
         );
       }
     } else {
       console.debug(
-        "ℹ️ PrivateDictAPI: Not running in an Electron environment (likely mobile).",
+        "ElectroDictAPI: Not running in an Electron environment (likely mobile).",
       );
     }
   }

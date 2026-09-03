@@ -13,6 +13,9 @@ export default class SyncableDictionaryPlugin extends Plugin {
   syncIntervalId: number;
 
   async onload() {
+    console.debug(
+      `SyncableDictionary version ${this.manifest.version} loaded.`,
+    );
     await this.loadSettings();
 
     // initial sync: force a merge on startup.
