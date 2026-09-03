@@ -19,7 +19,7 @@ export default class SyncableDictionaryPlugin extends Plugin {
     await this.syncDictionaries(true);
 
     // set up a periodic syncing interval
-    this.syncIntervalId = activeWindow.setInterval(() => {
+    this.syncIntervalId = window.setInterval(() => {
       void (async () => {
         await this.syncDictionaries(false);
       })();
@@ -54,7 +54,7 @@ export default class SyncableDictionaryPlugin extends Plugin {
   }
 
   onunload() {
-    if (this.syncIntervalId) activeWindow.clearInterval(this.syncIntervalId);
+    if (this.syncIntervalId) window.clearInterval(this.syncIntervalId);
 
     // final sync of dictionary before unloading
     this.syncDictionaries(false).catch((e) =>
