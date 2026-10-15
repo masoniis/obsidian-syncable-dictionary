@@ -33,10 +33,10 @@ alias l := lint
 #         util scripts
 # ----------------------------
 
-# regenerate bun.lockb + node_modules from scratch
+# regenerate bun.lock + node_modules from scratch
 [group("util")]
 clean:
-	rm -rf node_modules bun.lockb
+	rm -rf node_modules bun.lock bun.lockb
 	bun i
 
 alias c := clean
