@@ -15,7 +15,7 @@ jobs:
       contents: read
       actions: write # required for deleting github cache entries in nix setup
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Add nix flake profile
         uses: ./.github/actions/add-nix-flake-profile
@@ -42,7 +42,7 @@ jobs:
       contents: read
       actions: write # required for deleting github cache entries in nix setup
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # installs deps and makes nix available to runner path
       - name: Add nix flake profile

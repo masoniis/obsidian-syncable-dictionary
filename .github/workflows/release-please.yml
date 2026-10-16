@@ -17,7 +17,7 @@ jobs:
       # so the release PR would never get its required checks. an app token avoids that.
       - name: Generate app token
         id: app-token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ vars.RELEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
@@ -25,7 +25,7 @@ jobs:
       # opens/updates the release PR, or creates the tag + GitHub release once it's merged
       - name: Run release-please
         id: release
-        uses: googleapis/release-please-action@v4
+        uses: googleapis/release-please-action@v5
         with:
           token: ${{ steps.app-token.outputs.token }}
 
@@ -39,7 +39,7 @@ jobs:
       id-token: write # required for artifact attestations
       attestations: write # required for artifact attestations
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Add nix flake profile
         uses: ./.github/actions/add-nix-flake-profile
@@ -52,7 +52,7 @@ jobs:
           bun run build
 
       - name: Generate artifact attestation
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: |
             main.js
