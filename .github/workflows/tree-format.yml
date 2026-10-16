@@ -14,7 +14,7 @@ jobs:
       contents: write # enable updating the repo code
       actions: write # required for deleting github cache entries in nix setup
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           persist-credentials: true
