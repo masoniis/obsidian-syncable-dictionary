@@ -1,4 +1,4 @@
-import { Editor, MarkdownView, Notice, Plugin } from "obsidian";
+import { Editor, Notice, Plugin } from "obsidian";
 
 import { privateDictAPI } from "./electronDictAPI";
 import { SyncableDictionarySettingsTab } from "./ui/settingsTab";
@@ -8,9 +8,9 @@ import { SyncableDictionarySettings, DEFAULT_SETTINGS } from "./types";
 import { DictionaryMerger } from "./dictionaryMerger";
 
 export default class SyncableDictionaryPlugin extends Plugin {
-  settings: SyncableDictionarySettings;
-  settingsTab: SyncableDictionarySettingsTab;
-  syncIntervalId: number;
+  settings!: SyncableDictionarySettings;
+  settingsTab!: SyncableDictionarySettingsTab;
+  syncIntervalId?: number;
 
   async onload() {
     console.debug(
@@ -40,7 +40,7 @@ export default class SyncableDictionaryPlugin extends Plugin {
     this.addCommand({
       id: "add-selection-to-synced-dictionary",
       name: "Add selection to global dictionary",
-      editorCallback: (editor: Editor, _: MarkdownView) => {
+      editorCallback: (editor: Editor) => {
         const selection = editor.getSelection();
         if (selection) {
           const word = selection.trim();
