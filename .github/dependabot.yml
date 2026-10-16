@@ -5,11 +5,15 @@ updates:
     schedule:
       interval: "weekly"
     commit-message:
-      prefix: "chore" # conventional commit titles pass PR linting without cutting a release
+      prefix: "chore" # conventional commit titles pass PR linting
       include: "scope"
     groups:
       dev-dependencies:
         dependency-type: "development"
+    ignore:
+      # typescript-eslint doesn't support TS 7 yet, see https://github.com/typescript-eslint/typescript-eslint/issues/10940
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
