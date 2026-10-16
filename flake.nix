@@ -34,12 +34,11 @@
           paths = [ ];
         };
 
-        # used by auto release
-        packages.semanticRelease = pkgs.buildEnv {
+        # used by ci and release workflows
+        packages.bun = pkgs.buildEnv {
           name = "gh action raw bun profile";
           paths = with pkgs; [
             bun
-            nodejs_24
           ];
         };
       }

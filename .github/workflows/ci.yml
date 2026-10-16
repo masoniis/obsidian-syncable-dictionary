@@ -1,0 +1,53 @@
+name: ci
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write # required for deleting github cache entries in nix setup
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Add nix flake profile
+        uses: ./.github/actions/add-nix-flake-profile
+        with:
+          flake-profile: "bun"
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # esbuild strips types without checking them, so this is what catches type breakage
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Build
+        run: bun run build
+
+  format:
+    name: format
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write # required for deleting github cache entries in nix setup
+    steps:
+      - uses: actions/checkout@v5
+
+      # installs deps and makes nix available to runner path
+      - name: Add nix flake profile
+        uses: ./.github/actions/add-nix-flake-profile
+
+      # fails if any file isn't formatted, run `nix fmt` locally to fix
+      - name: Check formatting
+        run: nix fmt -- --ci

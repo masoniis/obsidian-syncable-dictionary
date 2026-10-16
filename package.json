@@ -15,7 +15,8 @@
   "scripts": {
     "dev": "bun esbuild.config.mjs",
     "build": "bun esbuild.config.mjs production",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
