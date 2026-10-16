@@ -14,9 +14,9 @@ install:
 
 alias i := install
 
-# build and lint repo
+# build, lint, and typecheck repo
 [group("core")]
-build: lint
+build: lint typecheck
 	bun i
 	bun run build
 
@@ -28,6 +28,13 @@ lint:
 	bun run lint
 
 alias l := lint
+
+# typecheck repo
+[group("core")]
+typecheck:
+	bun run typecheck
+
+alias t := typecheck
 
 # INFO: ----------------------
 #         util scripts
