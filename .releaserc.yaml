@@ -14,6 +14,8 @@ plugins:
         - { type: "feat", release: "minor" }
         - { type: "fix", release: "patch" }
         - { type: "chore", release: false }
+        # dependency bumps (dependabot) ship as a patch so releases stay current with the lockfile.
+        - { type: "chore", scope: "deps*", release: "patch" }
         - { type: "docs", release: false }
         - { type: "style", release: false }
         - { type: "refactor", release: false }
